@@ -1,141 +1,208 @@
-// Inclusión de librerías necesarias
-#include <QApplication>           // Clase base para aplicaciones Qt
-#include <QMainWindow>            // Ventana principal
-#include <QWidget>                // Componente base para elementos UI
-#include <QVBoxLayout>            // Layout vertical
-#include <QHBoxLayout>            // Layout horizontal
-#include <QTableWidget>           // Tabla para mostrar datos
-#include <QPushButton>            // Botones interactivos
-#include <QTextEdit>              // Área de texto editable
-#include <QFileDialog>            // Diálogo para selección de archivos
-#include <QMessageBox>            // Mensajes emergentes
-#include <QHeaderView>            // Configuración de cabeceras de tabla
-#include <QVector>                // Contenedor dinámico tipo vector
-#include <QFile>                  // Manejo de archivos
-#include <QTextStream>            // Lectura/escritura de texto
-#include <algorithm>              // Funciones STL (sort, min_element, etc.)
-#include <cmath>                  // Funciones matemáticas
-#include <map>                    // Contenedor asociativo para moda
-#include <QtCharts>               // Módulo de gráficos
-#include <QChartView>             // Vista de gráfico
-#include <QBarSet>                // Conjunto de datos para barras
-#include <QBarSeries>             // Serie de barras
-#include <QBarCategoryAxis>       // Eje X con categorías
-#include <QValueAxis>             // Eje Y numérico
+#include <QApplication>
+#include <QMainWindow>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QTableWidget>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QHeaderView>
+#include <QVector>
+#include <QFile>
+#include <QTextStream>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <QtCharts>
+#include <QChartView>
+#include <QBarSet>
+#include <QBarSeries>
+#include <QBarCategoryAxis>
+#include <QValueAxis>
+#include <QScatterSeries>
+#include <QComboBox>
+#include <QLabel>
 
-// ======================= Lógica Estadística =======================
 namespace Estadistica {
-// Función para calcular la media (promedio) de un conjunto de datos
-double media(const QVector<double>& datos) {
-    if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos"); // Verifica si hay datos
-    return std::accumulate(datos.begin(), datos.end(), 0.0) / datos.size(); // Suma y divide por el número de datos
-}
-
-// Función para calcular la mediana (valor central) de un conjunto de datos
-double mediana(QVector<double> datos) {
-    if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos"); // Verifica si hay datos
-    std::sort(datos.begin(), datos.end()); // Ordena los datos
-    int n = datos.size(); // Número de datos
-    return (n % 2 == 0) ? (datos[n/2 - 1] + datos[n/2]) / 2.0 : datos[n/2]; // Calcula la mediana
-}
-
-// Función para calcular la varianza (dispersión de los datos)
-double varianza(const QVector<double>& datos, bool muestral = true) {
-    if (datos.size() < 2) throw std::invalid_argument("Mínimo 2 datos"); // Verifica si hay suficientes datos
-    double mu = media(datos); // Calcula la media
-    double suma = std::accumulate(datos.begin(), datos.end(), 0.0,
-                                  [mu](double acum, double val) { return acum + std::pow(val - mu, 2); }); // Suma de cuadrados de diferencias
-    return suma / (datos.size() - (muestral ? 1 : 0)); // Divide por n-1 (muestral) o n (poblacional)
-}
-
-// Función para calcular la desviación estándar (raíz cuadrada de la varianza)
-double desviacionEstandar(const QVector<double>& datos, bool muestral = true) {
-    return std::sqrt(varianza(datos, muestral)); // Raíz cuadrada de la varianza
-}
-
-// Función para calcular la moda (valor más frecuente)
-QVector<double> moda(const QVector<double>& datos) {
-    if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos"); // Verifica si hay datos
-
-    std::map<double, int> frecuencias; // Mapa para contar frecuencias
-    for (double val : datos) frecuencias[val]++; // Cuenta cuántas veces aparece cada valor
-
-    int max_frec = std::max_element(frecuencias.begin(), frecuencias.end(),
-                                    [](auto& a, auto& b) { return a.second < b.second; })->second; // Encuentra la frecuencia máxima
-
-    QVector<double> modas; // Vector para almacenar las modas
-    for (auto& [valor, cuenta] : frecuencias) {
-        if (cuenta == max_frec) modas.append(valor); // Añade valores con la frecuencia máxima
+    // Análisis Univariado
+    double media(const QVector<double>& datos) {
+        if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos");
+        return std::accumulate(datos.begin(), datos.end(), 0.0) / datos.size();
     }
 
-    return (max_frec > 1) ? modas : QVector<double>(); // Devuelve las modas o un vector vacío si no hay
-}
+    double mediana(QVector<double> datos) {
+        if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos");
+        std::sort(datos.begin(), datos.end());
+        int n = datos.size();
+        return (n % 2 == 0) ? (datos[n/2 - 1] + datos[n/2]) / 2.0 : datos[n/2];
+    }
+
+    double varianza(const QVector<double>& datos, bool muestral = true) {
+        if (datos.size() < 2) throw std::invalid_argument("Mínimo 2 datos");
+        double mu = media(datos);
+        double suma = std::accumulate(datos.begin(), datos.end(), 0.0,
+                                    [mu](double acum, double val) { return acum + std::pow(val - mu, 2); });
+        return suma / (datos.size() - (muestral ? 1 : 0));
+    }
+
+    double desviacionEstandar(const QVector<double>& datos, bool muestral = true) {
+        return std::sqrt(varianza(datos, muestral));
+    }
+
+    QVector<double> moda(const QVector<double>& datos) {
+        if (datos.isEmpty()) throw std::invalid_argument("Datos vacíos");
+        std::map<double, int> frecuencias;
+        for (double val : datos) frecuencias[val]++;
+        int max_frec = std::max_element(frecuencias.begin(), frecuencias.end(),
+                                    [](auto& a, auto& b) { return a.second < b.second; })->second;
+        QVector<double> modas;
+        for (auto& [valor, cuenta] : frecuencias) {
+            if (cuenta == max_frec) modas.append(valor);
+        }
+        return (max_frec > 1) ? modas : QVector<double>();
+    }
+
+    // Análisis Bivariado
+    double covarianza(const QVector<double>& x, const QVector<double>& y) {
+        if (x.size() != y.size() || x.size() < 2) throw std::invalid_argument("Datos incompatibles");
+        double mediaX = media(x), mediaY = media(y);
+        double suma = 0.0;
+        for (int i = 0; i < x.size(); ++i) {
+            suma += (x[i] - mediaX) * (y[i] - mediaY);
+        }
+        return suma / (x.size() - 1);
+    }
+
+    double correlacionPearson(const QVector<double>& x, const QVector<double>& y) {
+        double cov = covarianza(x, y);
+        double desvX = desviacionEstandar(x);
+        double desvY = desviacionEstandar(y);
+        if (desvX == 0 || desvY == 0) throw std::invalid_argument("Desviación estándar cero");
+        return cov / (desvX * desvY);
+    }
 }
 
-// ======================= Interfaz Gráfica =======================
 class MainWindow : public QMainWindow {
-    Q_OBJECT // Macro necesaria para usar señales y slots
+    Q_OBJECT
 
 public:
-    // Constructor de la ventana principal
     MainWindow(QWidget *parent = nullptr) : QMainWindow(parent) {
-        configurarUI(); // Configura la interfaz de usuario
-        conectarEventos(); // Conecta los eventos de los botones
+        configurarUI();
+        conectarEventos();
     }
 
 private slots:
-    // Slot para cargar un archivo CSV
     void cargarCSV() {
-        QString ruta = QFileDialog::getOpenFileName(this, "Abrir CSV", "", "CSV (*.csv)"); // Abre un diálogo para seleccionar archivo
-        if (ruta.isEmpty()) return; // Si no se selecciona archivo, termina
+        QString ruta = QFileDialog::getOpenFileName(this, "Abrir CSV", "", "CSV (*.csv)");
+        if (ruta.isEmpty()) return;
 
-        datos.clear(); // Limpia los datos anteriores
-        QFile archivo(ruta); // Abre el archivo
-        if (archivo.open(QIODevice::ReadOnly)) { // Verifica si se pudo abrir
-            QTextStream entrada(&archivo); // Flujo de lectura
-            while (!entrada.atEnd()) { // Lee línea por línea
-                for (const QString& valor : entrada.readLine().split(',')) { // Divide por comas
+        datos.clear();
+        QFile archivo(ruta);
+        if (archivo.open(QIODevice::ReadOnly)) {
+            QTextStream entrada(&archivo);
+            bool primeraLinea = true;
+            int numVariables = 0;
+
+            while (!entrada.atEnd()) {
+                QString linea = entrada.readLine().trimmed();
+                if (linea.isEmpty()) continue;
+
+                QStringList valores = linea.split(',');
+                if (primeraLinea) {
+                    numVariables = valores.size();
+                    datos.resize(numVariables);
+                    primeraLinea = false;
+                }
+
+                if (valores.size() != numVariables) {
+                    QMessageBox::warning(this, "Error", "Formato de CSV inválido.");
+                    datos.clear();
+                    return;
+                }
+
+                for (int i = 0; i < numVariables; ++i) {
                     bool ok;
-                    double num = valor.trimmed().toDouble(&ok); // Convierte a número
-                    if (ok) datos.append(num); // Si es válido, lo añade a los datos
+                    double num = valores[i].trimmed().toDouble(&ok);
+                    if (ok) datos[i].append(num);
                 }
             }
-            actualizarTabla(); // Actualiza la tabla con los nuevos datos
-            actualizarGrafica(); // Actualiza el gráfico
+
+            actualizarTabla();
+            actualizarUIAfterCargar();
+            actualizarGrafica();
         } else {
-            QMessageBox::critical(this, "Error", "Error al abrir el archivo"); // Muestra un mensaje de error
+            QMessageBox::critical(this, "Error", "Error al abrir el archivo");
         }
     }
 
-    // Slots para calcular métricas estadísticas
-    void calcularMedia() { calcularMetrica("Media", Estadistica::media); } // Calcula la media
-    void calcularMediana() { calcularMetrica("Mediana", Estadistica::mediana); } // Calcula la mediana
-    void calcularVarianza() { calcularMetrica("Varianza", [](auto d){ return Estadistica::varianza(d); }); } // Calcula la varianza
-    void calcularDesviacion() { calcularMetrica("Desviación", [](auto d){ return Estadistica::desviacionEstandar(d); }); } // Calcula la desviación estándar
+    void calcularMedia() { calcularMetrica("Media", Estadistica::media); }
+    void calcularMediana() { calcularMetrica("Mediana", Estadistica::mediana); }
+    void calcularVarianza() { calcularMetrica("Varianza", [](auto d){ return Estadistica::varianza(d); }); }
+    void calcularDesviacion() { calcularMetrica("Desviación", [](auto d){ return Estadistica::desviacionEstandar(d); }); }
 
-    // Slot para calcular la moda
     void calcularModa() {
         try {
-            QVector<double> modas = Estadistica::moda(datos); // Calcula la moda
+            int idx = cmbVariableUni->currentIndex();
+            if (idx < 0 || idx >= datos.size()) return;
+
+            QVector<double> modas = Estadistica::moda(datos[idx]);
             if (modas.isEmpty()) {
-                resultados->append("Moda: Sin moda (valores únicos)"); // Si no hay moda
+                resultados->append("Moda: Sin moda (valores únicos)");
             } else {
                 QStringList valores;
-                for (double m : modas) valores << QString::number(m, 'f', 3); // Formatea los valores
-                resultados->append("Moda: " + valores.join(", ")); // Muestra las modas
+                for (double m : modas) valores << QString::number(m, 'f', 3);
+                resultados->append(QString("Moda (Var %1): %2").arg(idx+1).arg(valores.join(", ")));
             }
         } catch (const std::exception& e) {
-            QMessageBox::warning(this, "Error", e.what()); // Muestra un mensaje de error
+            QMessageBox::warning(this, "Error", e.what());
+        }
+    }
+
+    void analizarBivariado() {
+        int xIdx = cmbVariableX->currentIndex();
+        int yIdx = cmbVariableY->currentIndex();
+
+        if (xIdx < 0 || yIdx < 0 || xIdx >= datos.size() || yIdx >= datos.size()) {
+            QMessageBox::warning(this, "Error", "Seleccione variables válidas");
+            return;
+        }
+
+        try {
+            double cov = Estadistica::covarianza(datos[xIdx], datos[yIdx]);
+            double corr = Estadistica::correlacionPearson(datos[xIdx], datos[yIdx]);
+            resultados->append(QString("Covarianza (Var%1-Var%2): %3\nCorrelación: %4")
+                                   .arg(xIdx+1).arg(yIdx+1)
+                                   .arg(cov, 0, 'f', 3)
+                                   .arg(corr, 0, 'f', 3));
+            mostrarScatterPlot(datos[xIdx], datos[yIdx]);
+        } catch (const std::exception& e) {
+            QMessageBox::warning(this, "Error", e.what());
         }
     }
 
 private:
-    // Función para configurar la interfaz de usuario
-    void configurarUI() {
-        setWindowTitle("Analizador Estadístico"); // Título de la ventana
-        setMinimumSize(800, 600); // Tamaño mínimo de la ventana
+    QVector<QVector<double>> datos;
+    QChartView *chartView;
+    QTableWidget *tabla;
+    QTextEdit *resultados;
+    QComboBox *cmbVariableUni;
+    QComboBox *cmbVariableX;
+    QComboBox *cmbVariableY;
 
-        // Estilos CSS para la interfaz
+    QPushButton *btnCargar;
+    QPushButton *btnMedia;
+    QPushButton *btnMediana;
+    QPushButton *btnModa;
+    QPushButton *btnVarianza;
+    QPushButton *btnDesviacion;
+    QPushButton *btnBivariado;
+
+    void configurarUI() {
+        setWindowTitle("Analizador Estadístico");
+        setMinimumSize(1000, 800);
+
         QString estilo = R"(
         QMainWindow { background-color: #2D2D2D; }
         QTableWidget {
@@ -176,156 +243,208 @@ private:
         QScrollBar:vertical { background: #1E1E1E; width: 12px; }
         QScrollBar::handle:vertical { background: #3A3A3A; min-height: 20px; border-radius: 6px; }
         )";
-        this->setStyleSheet(estilo); // Aplica los estilos
+        setStyleSheet(estilo);
 
-        // Configuración de la interfaz
-        QWidget *widgetCentral = new QWidget(this); // Widget central
-        QVBoxLayout *layoutPrincipal = new QVBoxLayout(widgetCentral); // Layout vertical
+        QWidget *widgetCentral = new QWidget(this);
+        QVBoxLayout *layoutPrincipal = new QVBoxLayout(widgetCentral);
 
-        // Tabla para mostrar datos
+        // Componentes
         tabla = new QTableWidget(this);
-        tabla->setColumnCount(1); // Una columna para los valores
-        tabla->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch); // Ajusta el ancho de la columna
-        tabla->setHorizontalHeaderLabels({"Valores"}); // Etiqueta de la columna
-        tabla->setStyleSheet("alternate-background-color: #262626; selection-background-color: #00B4D8;"); // Estilos de la tabla
-
-        // Vista del gráfico
         chartView = new QChartView();
-        chartView->setRenderHint(QPainter::Antialiasing); // Suavizado de bordes
-        chartView->setStyleSheet("background: transparent; border: none;"); // Estilos del gráfico
-
-        // Botones para operaciones
-        QHBoxLayout *layoutBotones = new QHBoxLayout();
-        QPushButton *btnCargar = new QPushButton("Cargar CSV", this);
-        QPushButton *btnMedia = new QPushButton("Media", this);
-        QPushButton *btnMediana = new QPushButton("Mediana", this);
-        QPushButton *btnModa = new QPushButton("Moda", this);
-        QPushButton *btnVarianza = new QPushButton("Varianza", this);
-        QPushButton *btnDesviacion = new QPushButton("Desviación", this);
-
-        // Añadir botones al layout
-        QList<QPushButton*> botones = {btnCargar, btnMedia, btnMediana,btnModa ,btnVarianza, btnDesviacion};
-        for (QPushButton* btn : botones) {
-            btn->setObjectName(btn->text().replace(" ", "")); // Asigna nombres únicos
-            layoutBotones->addWidget(btn); // Añade al layout
-        }
-
-        // Área de texto para resultados
+        chartView->setRenderHint(QPainter::Antialiasing);
         resultados = new QTextEdit(this);
-        resultados->setReadOnly(true); // Solo lectura
+        resultados->setReadOnly(true);
 
-        // Ensamblar la interfaz
-        layoutPrincipal->addWidget(tabla); // Añade la tabla
-        layoutPrincipal->addWidget(chartView); // Añade el gráfico
-        layoutPrincipal->addLayout(layoutBotones); // Añade los botones
-        layoutPrincipal->addWidget(resultados); // Añade el área de resultados
+        // Botones
+        btnCargar = new QPushButton("Cargar CSV", this);
+        btnMedia = new QPushButton("Media", this);
+        btnMediana = new QPushButton("Mediana", this);
+        btnModa = new QPushButton("Moda", this);
+        btnVarianza = new QPushButton("Varianza", this);
+        btnDesviacion = new QPushButton("Desviación", this);
+        btnBivariado = new QPushButton("Analizar Bivariado", this);
 
-        setCentralWidget(widgetCentral); // Establece el widget central
+        // Comboboxes
+        cmbVariableUni = new QComboBox(this);
+        cmbVariableX = new QComboBox(this);
+        cmbVariableY = new QComboBox(this);
+
+        // Layouts
+        QHBoxLayout *layoutControles = new QHBoxLayout();
+        layoutControles->addWidget(btnCargar);
+        layoutControles->addWidget(new QLabel("Variable:", this));
+        layoutControles->addWidget(cmbVariableUni);
+
+        QHBoxLayout *layoutBotonesUni = new QHBoxLayout();
+        layoutBotonesUni->addWidget(btnMedia);
+        layoutBotonesUni->addWidget(btnMediana);
+        layoutBotonesUni->addWidget(btnModa);
+        layoutBotonesUni->addWidget(btnVarianza);
+        layoutBotonesUni->addWidget(btnDesviacion);
+
+        QHBoxLayout *layoutBivariado = new QHBoxLayout();
+        layoutBivariado->addWidget(new QLabel("X:", this));
+        layoutBivariado->addWidget(cmbVariableX);
+        layoutBivariado->addWidget(new QLabel("Y:", this));
+        layoutBivariado->addWidget(cmbVariableY);
+        layoutBivariado->addWidget(btnBivariado);
+
+        // Ensamblado
+        layoutPrincipal->addLayout(layoutControles);
+        layoutPrincipal->addLayout(layoutBotonesUni);
+        layoutPrincipal->addLayout(layoutBivariado);
+        layoutPrincipal->addWidget(tabla);
+        layoutPrincipal->addWidget(chartView);
+        layoutPrincipal->addWidget(resultados);
+
+        setCentralWidget(widgetCentral);
     }
 
-    // Función para conectar eventos de los botones
     void conectarEventos() {
-        connect(findChild<QPushButton*>("CargarCSV"), &QPushButton::clicked, this, &MainWindow::cargarCSV);
-        connect(findChild<QPushButton*>("Media"), &QPushButton::clicked, this, &MainWindow::calcularMedia);
-        connect(findChild<QPushButton*>("Mediana"), &QPushButton::clicked, this, &MainWindow::calcularMediana);
-        connect(findChild<QPushButton*>("Moda"), &QPushButton::clicked, this, &MainWindow::calcularModa);
-        connect(findChild<QPushButton*>("Varianza"), &QPushButton::clicked, this, &MainWindow::calcularVarianza);
-        connect(findChild<QPushButton*>("Desviación"), &QPushButton::clicked, this, &MainWindow::calcularDesviacion);
+        connect(btnCargar, &QPushButton::clicked, this, &MainWindow::cargarCSV);
+        connect(btnMedia, &QPushButton::clicked, this, &MainWindow::calcularMedia);
+        connect(btnMediana, &QPushButton::clicked, this, &MainWindow::calcularMediana);
+        connect(btnModa, &QPushButton::clicked, this, &MainWindow::calcularModa);
+        connect(btnVarianza, &QPushButton::clicked, this, &MainWindow::calcularVarianza);
+        connect(btnDesviacion, &QPushButton::clicked, this, &MainWindow::calcularDesviacion);
+        connect(btnBivariado, &QPushButton::clicked, this, &MainWindow::analizarBivariado);
     }
 
-    // Función para actualizar la tabla con los datos
     void actualizarTabla() {
-        tabla->setRowCount(datos.size()); // Establece el número de filas
+        if (datos.isEmpty()) {
+            tabla->setRowCount(0);
+            tabla->setColumnCount(0);
+            return;
+        }
+
+        int filas = datos[0].size();
+        int columnas = datos.size();
+        tabla->setRowCount(filas);
+        tabla->setColumnCount(columnas);
+
+        QStringList headers;
+        for (int i = 0; i < columnas; ++i) {
+            headers << QString("Var %1").arg(i+1);
+            for (int j = 0; j < filas; ++j) {
+                QTableWidgetItem *item = new QTableWidgetItem(QString::number(datos[i][j], 'f', 3));
+                tabla->setItem(j, i, item);
+            }
+        }
+        tabla->setHorizontalHeaderLabels(headers);
+    }
+
+    void actualizarUIAfterCargar() {
+        cmbVariableUni->clear();
+        cmbVariableX->clear();
+        cmbVariableY->clear();
         for (int i = 0; i < datos.size(); ++i) {
-            tabla->setItem(i, 0, new QTableWidgetItem(QString::number(datos[i], 'f', 3))); // Añade los datos a la tabla
+            QString nombre = QString("Variable %1").arg(i + 1);
+            cmbVariableUni->addItem(nombre);
+            cmbVariableX->addItem(nombre);
+            cmbVariableY->addItem(nombre);
         }
     }
 
-    // Plantilla para calcular métricas
     template<typename Func>
     void calcularMetrica(const QString& nombre, Func funcion) {
         try {
-            double resultado = funcion(datos); // Calcula la métrica
-            resultados->append(QString("%1: %2").arg(nombre).arg(resultado, 0, 'f', 3)); // Muestra el resultado
+            int idx = cmbVariableUni->currentIndex();
+            if (idx < 0 || idx >= datos.size()) return;
+
+            double resultado = funcion(datos[idx]);
+            resultados->append(QString("%1 (Var %2): %3")
+                                   .arg(nombre).arg(idx+1)
+                                   .arg(resultado, 0, 'f', 3));
         } catch (const std::exception& e) {
-            QMessageBox::warning(this, "Error", e.what()); // Muestra un mensaje de error
+            QMessageBox::warning(this, "Error", e.what());
         }
     }
 
-    // Función para actualizar el gráfico
     void actualizarGrafica() {
-        QChart *chart = new QChart(); // Crea un nuevo gráfico
-        chart->setTitle("Distribución de datos"); // Título del gráfico
-        chart->setTheme(QChart::ChartThemeDark); // Tema oscuro
-        chart->setBackgroundBrush(QBrush(QColor("#2D2D2D"))); // Fondo del gráfico
-        chart->setTitleBrush(QBrush(Qt::white)); // Color del título
-        chart->legend()->setVisible(false); // Oculta la leyenda
-
-        if (!datos.isEmpty()) { // Si hay datos
-            double min = *std::min_element(datos.begin(), datos.end()); // Valor mínimo
-            double max = *std::max_element(datos.begin(), datos.end()); // Valor máximo
-            double binWidth = 0.0; // Ancho de cada intervalo
-            const int bins = 10; // Número de intervalos
-
-            if (min == max) { // Si todos los datos son iguales
-                min -= 1.0; // Ajusta el mínimo
-                max += 1.0; // Ajusta el máximo
-                binWidth = 0.2; // Ancho fijo
-            } else {
-                binWidth = (max - min) / bins; // Calcula el ancho de los intervalos
-            }
-
-            QBarSet *barSet = new QBarSet("Frecuencia"); // Conjunto de barras
-            QVector<int> frecuencias(bins, 0); // Vector para contar frecuencias
-
-            for (double valor : datos) { // Recorre los datos
-                int indice = qBound(0, static_cast<int>((valor - min) / binWidth), bins - 1); // Calcula el índice del intervalo
-                frecuencias[indice]++; // Incrementa la frecuencia
-            }
-
-            for (int f : frecuencias) *barSet << f; // Añade las frecuencias al conjunto de barras
-            barSet->setColor(QColor("#00B4D8")); // Color de las barras
-
-            QBarSeries *series = new QBarSeries(); // Serie de barras
-            series->append(barSet); // Añade el conjunto de barras
-
-            QStringList categorias; // Etiquetas para el eje X
-            for (int i = 0; i < bins; ++i) {
-                categorias << QString::number(min + i * binWidth, 'f', 2); // Añade las etiquetas
-            }
-
-            QBarCategoryAxis *axisX = new QBarCategoryAxis(); // Eje X
-            axisX->append(categorias); // Añade las categorías
-            axisX->setLabelsBrush(QBrush(Qt::white)); // Color de las etiquetas
-
-            QValueAxis *axisY = new QValueAxis(); // Eje Y
-            axisY->setLabelFormat("%d"); // Formato de las etiquetas
-            axisY->setLabelsBrush(QBrush(Qt::white)); // Color de las etiquetas
-
-            chart->addSeries(series); // Añade la serie al gráfico
-            chart->addAxis(axisX, Qt::AlignBottom); // Añade el eje X
-            chart->addAxis(axisY, Qt::AlignLeft); // Añade el eje Y
-
-            series->attachAxis(axisX); // Conecta la serie al eje X
-            series->attachAxis(axisY); // Conecta la serie al eje Y
-        }
-
-        chartView->setChart(chart); // Establece el gráfico en la vista
+        if (datos.isEmpty()) return;
+        mostrarHistograma(datos[0]);
     }
 
-    // Miembros de la clase
-    QChartView *chartView; // Vista del gráfico
-    QTableWidget *tabla; // Tabla de datos
-    QTextEdit *resultados; // Área de texto para resultados
-    QVector<double> datos; // Vector para almacenar los datos
+    void mostrarHistograma(const QVector<double>& datosVar) {
+        QChart *chart = new QChart();
+        chart->setTitle("Histograma");
+        chart->setTheme(QChart::ChartThemeDark);
+
+        if (datosVar.isEmpty()) return;
+
+        double min = *std::min_element(datosVar.begin(), datosVar.end());
+        double max = *std::max_element(datosVar.begin(), datosVar.end());
+
+        if (min == max) {
+            min -= 1.0;
+            max += 1.0;
+        }
+
+        const int bins = 10;
+        double binWidth = (max - min) / bins;
+
+        QBarSet *barSet = new QBarSet("Frecuencia");
+        QVector<int> frecuencias(bins, 0);
+
+        for (double valor : datosVar) {
+            int indice = qBound(0, static_cast<int>((valor - min) / binWidth), bins - 1);
+            frecuencias[indice]++;
+        }
+
+        for (int f : frecuencias) *barSet << f;
+        barSet->setColor(QColor("#00B4D8"));
+
+        QBarSeries *series = new QBarSeries();
+        series->append(barSet);
+
+        QStringList categorias;
+        for (int i = 0; i < bins; ++i) {
+            categorias << QString::number(min + i * binWidth, 'f', 2);
+        }
+
+        QBarCategoryAxis *axisX = new QBarCategoryAxis();
+        axisX->append(categorias);
+        axisX->setLabelsBrush(QBrush(Qt::white));
+
+        QValueAxis *axisY = new QValueAxis();
+        axisY->setLabelFormat("%d");
+        axisY->setLabelsBrush(QBrush(Qt::white));
+
+        chart->addSeries(series);
+        chart->addAxis(axisX, Qt::AlignBottom);
+        chart->addAxis(axisY, Qt::AlignLeft);
+        series->attachAxis(axisX);
+        series->attachAxis(axisY);
+
+        chartView->setChart(chart);
+    }
+
+    void mostrarScatterPlot(const QVector<double>& x, const QVector<double>& y) {
+        QScatterSeries *series = new QScatterSeries();
+        series->setMarkerSize(10.0);
+        series->setColor(QColor("#00B4D8"));
+
+        for (int i = 0; i < x.size(); ++i) {
+            series->append(x[i], y[i]);
+        }
+
+        QChart *chart = new QChart();
+        chart->addSeries(series);
+        chart->createDefaultAxes();
+        chart->setTitle("Scatter Plot");
+        chart->setTheme(QChart::ChartThemeDark);
+        chart->axes(Qt::Horizontal).first()->setLabelsBrush(QBrush(Qt::white));
+        chart->axes(Qt::Vertical).first()->setLabelsBrush(QBrush(Qt::white));
+
+        chartView->setChart(chart);
+    }
 };
 
-// ======================= Punto de Entrada =======================
 int main(int argc, char *argv[]) {
-    QApplication app(argc, argv); // Inicializa la aplicación Qt
-    MainWindow ventana; // Crea la ventana principal
-    ventana.show(); // Muestra la ventana
-    return app.exec(); // Inicia el bucle de eventos
+    QApplication app(argc, argv);
+    MainWindow ventana;
+    ventana.show();
+    return app.exec();
 }
 
-#include "main.moc" // Inclusión de meta-objetos para señales y slots
+#include "main.moc"
