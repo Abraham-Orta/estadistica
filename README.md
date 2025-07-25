@@ -36,8 +36,8 @@ Este es un proyecto de escritorio desarrollado en C++ con el framework Qt 6. La 
 
 1. **Clona el repositorio**:
    ```bash
-   git clone <https://github.com/Abraham-Orta/estadistica.git>
-   cd <estadistica>
+   git clone https://github.com/Abraham-Orta/estadistica.git
+   cd estadistica
    ```
 
 2. **Crea un directorio de compilación**:
